@@ -79,10 +79,7 @@ function addplayer() {
         console.log(player[k])
     }
 }
-//增加food
-function addfood() {
-    food.create()
-}
+
 // 清除画布
 function clear() {
     ctx.clearRect(0, 0, huabu.width, huabu.height);
@@ -238,7 +235,7 @@ huabu.addEventListener("mouseup", event => {
     if (event.button === 0) {
         if (shubiaops.x > huabu.width - 80 && shubiaops.y > 80) {
             if (shubiaops.x < huabu.width - 30 && shubiaops.y < 130)
-                addfood()
+                foods.push(new Food)
         }
         liftchick.use = 0;
     }
@@ -333,20 +330,23 @@ function draw() {
     } else {
         ctx.drawImage(shubiao, shubiaops.x - 24, shubiaops.y - 10, 50, 50);
     }
-    food.draw()
+    for (let i = 0; i < foods.length; i++) {
+        foods[i].loop()
+    }
     ctx.fillStyle = "rgb(0, 0, 0)"
     ctx.font = "24px serif"
     ctx.fillText("W,S,A,D控制移动，R键换猫，F换面包，鼠标右键会使鼠标变成猫薄荷并使猫猫靠近！点击右上角按钮可以随机增加一只猫(上限10个)", 100, 40)
 }
 
-class item {
-    constructor(x, y, width, height) {
+class Item {
+    constructor(x, y, width, height,img) {
         this.x = x
         this.y = y
-        this.wideth = width
+        this.width = width
         this.height = height
+        this.img = img
     }
-    check(){
+    check() {
         if (this.x < 100) {
             this.x = 100;
         }
@@ -360,42 +360,147 @@ class item {
             this.y = huabu.height - 100
         }
     }
-}
+    tuowei() {
+        const tuoweizuobiao = [];
+        setInterval(() => {
+            for (let i = 1; i < player.length; i++) {
+                const tw = {
+                    x: this.x,
+                    y: this.y
+                }
+                tuoweizuobiao.push(tw)
+                if (tuoweizuobiao.length > 6 * player.length - 6) {
+                    tuoweizuobiao.shift();
+                }
+            }
+        }, 30)
+    }
+    move(){
+        const jilu = {
+            w: 0,
+            s: 0,
+            a: 0,
+            d: 0
+        }
+        window.addEventListener("keypress", event => {
 
+            if (event.key === "d" || event.key === "D") {
+                jilu.d = 1;
+            }
+            if (event.key === "a" || event.key === "A") {
+                jilu.a = 1;
+            }
+            if (event.key === "s" || event.key === "S") {
+                jilu.s = 1;
+            }
+            if (event.key === "w" || event.key === "W") {
+                jilu.w = 1;
+            }
+        })
+        window.addEventListener("keyup", event => {
+            if (event.key === "d" || event.key === "D") {
+                jilu.d = 0;
+            }
+            if (event.key === "a" || event.key === "A") {
+                jilu.a = 0;
+            }
+            if (event.key === "s" || event.key === "S") {
+                jilu.s = 0;
+            }
+            if (event.key === "w" || event.key === "W") {
+                jilu.w = 0;
+            }
+        })
+
+        function yidong() {
+            if (jilu.d === 1) {
+                player[huan].x += speed;
+            }
+            if (jilu.a === 1) {
+                player[huan].x -= speed;
+            }
+            if (jilu.s === 1) {
+                player[huan].y += speed;
+            }
+            if (jilu.w === 1) {
+                player[huan].y -= speed;
+            }
+            // 右键跟随移动
+            if (rightchick.use === 1) {
+                for (let i = 1; i < player.length; i++) {
+                    if (player[i].x < shubiaops.x - 24) {
+        
+                        player[i].x += speed - 3;
+                    }
+                    if (player[i].x > shubiaops.x - 24) {
+                        player[i].x -= speed - 3;
+                    }
+                    if (player[i].y < shubiaops.y - 10) {
+                        player[i].y += speed - 3;
+                    }
+                    if (player[i].y > shubiaops.y - 10) {
+                        player[i].y -= speed - 3;
+                    }
+                }
+            }
+        }
+    }
+    draw(img){
+
+        ctx.drawImage(img, this.x, this.y, this.width, this.height)
+    }
+}
+class Cat extends Item {
+    constructor(x, y, width, height,img) {
+        super(x, y, width, height,img)
+        this.img = cat
+    }
+    init() {
+        this.x = x || Math.random() * 1600
+        this.y = y || Math.random() * 800
+        this.width = width || 50
+        this.height = height || 50
+        console.log(this);
+    }
+    
+}
 //食物
 let boto = new Image()
 boto.src = 'image/像素_药水.svg'
-class Food extends item {
-    constructor(x, y, width, height) {
-        super(x, y, width, height)
+class Food extends Item {
+    constructor(x, y, width, height,img) {
+        super(x, y, width, height,img)
+        this.init()
+        this.img = boto
+       
     }
-    create() {
+    init() {
         this.x = Math.random() * 1600
         this.y = Math.random() * 800
-        this.width= Math.random() * 100 + 30
-        this.height= Math.random() * 100 + 30
+        this.width = Math.random() * 100 + 30
+        this.height = Math.random() * 100 + 30
         console.log(this);
     }
-    draw() {
+    loop() {
         this.remove()
         this.check()
-        ctx.drawImage(boto, this.x, this.y, this.width, this.height)
+        this.draw()
     }
     remove() {
         for (let i = 1; i < player.length; i++) {
             if ((player[i].x + 50 > this.x && player[i].x < this.x + this.width) && (player[i].y + 50 > this.y && player[i].y < this.y + this.height)) {
                 delete this.x, this.y
-                console.log(this);
             }
         }
     }
 }
-let food = new Food()
+let foods = []
 
+setInterval(() => {
+    foods.push(new Food)
+    console.log(foods);
 
-setInterval(()=>{
-    food.create()
-},3000)
+}, 3000)
 
 // 定时渲染
 setInterval(() => {
